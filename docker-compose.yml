@@ -1,0 +1,46 @@
+version: "3.7"
+
+services:
+  web:
+    image: nginx:1.17-alpine
+    container_name: ${APP_NAME}-nginx
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "${PORT_HTTP}:80"
+      - "${PORT_HTTPS}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - ./laravel-app/project:/var/www/html
+#    depends_on:
+#      - php-fpm
+    networks:
+      - web-network
+
+  php-fpm:
+    build:
+      context: ${PHP_VER_FPM}-fpm
+    container_name: ${APP_NAME}-php-${PHP_VER_FPM}
+    restart: unless-stopped
+    image: ${APP_NAME}-php-fpm${PHP_VER_FPM}:${APP_NAME}
+    working_dir: ${WORKING_DIR}
+    environment:
+      - "ENV_SUBSTITUTION_ENABLE=true"
+      - "PHP_MEMORY_LIMIT=512M"
+      - "PHP_FPM_LISTEN=${PHP_FPM_LISTEN}"
+      - "PHP_SESSION_GC_MAXLIFETIME=7200"
+    expose:
+      - "9090"
+    volumes:
+      - ./laravel-app/project:/var/www/html
+    networks:
+      - mysql8
+      - web-network
+
+# Networks
+networks:
+  web-network:
+    name: web-network
+  mysql8:
+    name: mysql8
