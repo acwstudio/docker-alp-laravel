@@ -1,4 +1,4 @@
-FROM php:8.1.12-fpm-alpine3.16
+FROM php:8.1.13-fpm-alpine3.16
 
 LABEL Maintainer="Jose Quintana <joseluisq.net>" \
     Description="PHP-FPM v8.1 with essential extensions on top of Alpine Linux."
@@ -9,6 +9,9 @@ ARG COMPOSER_SUM="c252c2a2219956f88089ffc242b42c8cb9300a368fd3890d63940e4fc96523
 
 # Swoole - https://github.com/swoole/swoole-src
 ARG SWOOLE_VERSION="4.8.12"
+
+# Phalcon - https://github.com/phalcon/cphalcon
+ARG PHALCON_VERSION="5.1.2"
 
 # Install dependencies
 RUN set -eux \
@@ -28,6 +31,7 @@ RUN set -eux \
         libjpeg-turbo \
         libpng \
         libpq \
+        librdkafka \
         libssh2 \
         libstdc++ \
         libtool \
@@ -38,6 +42,7 @@ RUN set -eux \
         rabbitmq-c \
         tidyhtml \
         tzdata \
+        unixodbc \
         vips \
         yaml \
         nano
@@ -55,6 +60,7 @@ RUN set -eux \
         curl-dev \
         freetds-dev \
         freetype-dev \
+        g++ \
         gcc \
         gettext-dev \
         git \
@@ -66,6 +72,7 @@ RUN set -eux \
         libc-dev \
         libjpeg-turbo-dev \
         libpng-dev \
+        librdkafka-dev \
         libssh2-dev \
         libwebp-dev \
         libxml2-dev \
@@ -78,6 +85,7 @@ RUN set -eux \
         postgresql-dev \
         rabbitmq-c-dev \
         tidyhtml-dev \
+        unixodbc-dev \
         vips-dev \
         yaml-dev \
         zlib-dev \
@@ -96,7 +104,7 @@ RUN set -eux \
 ################################
 \
 # Install gd
-    && ln -s /usr/lib/x86_64-linux-gnu/libXpm.* /usr/lib/ \
+    && ln -s /usr/lib/$(apk --print-arch)-linux-gnu/libXpm.* /usr/lib/ \
     && docker-php-ext-configure gd \
         --enable-gd \
         --with-webp \
@@ -197,9 +205,29 @@ RUN set -eux \
     && docker-php-ext-install -j$(nproc) pgsql \
     && true \
 \
+# Install sqlsrv
+    && pecl install sqlsrv \
+    && docker-php-ext-enable sqlsrv \
+    && true \
+\
+# Install pdo_sqlsrv
+    && pecl install pdo_sqlsrv \
+    && docker-php-ext-enable pdo_sqlsrv \
+    && true \
+\
 # Install psr
     && pecl install psr \
     && docker-php-ext-enable psr \
+    && true \
+\
+# Install redis
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && true \
+\
+# Install rdkafka
+    && pecl install rdkafka \
+    && docker-php-ext-enable rdkafka \
     && true \
 \
 # Install soap
