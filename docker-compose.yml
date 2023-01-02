@@ -37,6 +37,7 @@ services:
     networks:
       - mysql8
       - web-network
+      - psql
 
 # Networks
 networks:
@@ -44,3 +45,5 @@ networks:
     name: web-network
   mysql8:
     name: mysql8
+  psql:
+    name: psql
