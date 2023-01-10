@@ -1,4 +1,4 @@
-FROM php:8.0.25-fpm-alpine3.16
+FROM php:8.0.26-fpm-alpine3.16
 
 LABEL Maintainer="Jose Quintana <git.io/joseluisq>" \
     Description="PHP-FPM v8.0 with essential extensions on top of Alpine Linux."
@@ -9,6 +9,9 @@ ARG COMPOSER_SUM="c252c2a2219956f88089ffc242b42c8cb9300a368fd3890d63940e4fc96523
 
 # Swoole - https://github.com/swoole/swoole-src
 ARG SWOOLE_VERSION="4.8.12"
+
+# Phalcon - https://github.com/phalcon/cphalcon
+# ARG PHALCON_VERSION="5.1.2"
 
 # Install dependencies
 RUN set -eux \
@@ -22,6 +25,7 @@ RUN set -eux \
         icu-libs \
         imagemagick \
         imap \
+        libexecinfo \
         libffi \
         libgmpxx \
         libintl \
@@ -29,6 +33,7 @@ RUN set -eux \
         libmcrypt \
         libpng \
         libpq \
+        librdkafka \
         libssh2 \
         libstdc++ \
         libtool \
@@ -39,6 +44,7 @@ RUN set -eux \
         rabbitmq-c \
         tidyhtml \
         tzdata \
+        unixodbc \
         vips \
         yaml
 
@@ -55,6 +61,7 @@ RUN set -eux \
         curl-dev \
         freetds-dev \
         freetype-dev \
+        g++ \
         gcc \
         gettext-dev \
         git \
@@ -64,9 +71,11 @@ RUN set -eux \
         imap-dev \
         krb5-dev \
         libc-dev \
+        libexecinfo-dev \
         libjpeg-turbo-dev \
         libmcrypt-dev \
         libpng-dev \
+        librdkafka-dev \
         libssh2-dev \
         libwebp-dev \
         libxml2-dev \
@@ -79,6 +88,7 @@ RUN set -eux \
         postgresql-dev \
         rabbitmq-c-dev \
         tidyhtml-dev \
+        unixodbc-dev \
         vips-dev \
         yaml-dev \
         zlib-dev \
@@ -97,7 +107,7 @@ RUN set -eux \
 ################################
 \
 # Install gd
-    && ln -s /usr/lib/x86_64-linux-gnu/libXpm.* /usr/lib/ \
+    && ln -s /usr/lib/$(apk --print-arch)-linux-gnu/libXpm.* /usr/lib/ \
     && docker-php-ext-configure gd \
         --enable-gd \
         --with-webp \
@@ -183,6 +193,10 @@ RUN set -eux \
     && docker-php-ext-enable oauth \
     && true \
 \
+# Install opcache
+    && docker-php-ext-install -j$(nproc) opcache \
+    && true \
+\
 # Install pdo_mysql
     && docker-php-ext-configure pdo_mysql --with-zlib-dir=/usr \
     && docker-php-ext-install -j$(nproc) pdo_mysql \
@@ -196,6 +210,17 @@ RUN set -eux \
     && docker-php-ext-install -j$(nproc) pcntl \
     && true \
 \
+# TEMPORARILY DDISABLED
+# # Install phalcon
+#     && git clone --depth=1 --branch=v${PHALCON_VERSION} https://github.com/phalcon/cphalcon.git \
+#     && cd cphalcon/ext \
+#     && phpize \
+#     && ./configure --enable-phalcon CFLAGS="-O2 -Wall -fvisibility=hidden -flto -DZEPHIR_RELEASE=1 --param ggc-min-expand=0 --param ggc-min-heapsize=8192" \
+#     && make -s \
+#     && make -s install \
+#     && docker-php-ext-enable phalcon \
+#     && true \
+# \
 # Install pdo_pgsql
     && docker-php-ext-install -j$(nproc) pdo_pgsql \
     && true \
@@ -204,9 +229,31 @@ RUN set -eux \
     && docker-php-ext-install -j$(nproc) pgsql \
     && true \
 \
+# ONLY 64-bit targets
+    && if [ "$(uname -m)" = "x86_64" ] || [ "$(uname -m)" = "aarch64" ]; then \
+    # Install sqlsrv
+        pecl install sqlsrv; \
+        docker-php-ext-enable sqlsrv; \
+        true; \
+    # Install pdo_sqlsrv
+        pecl install pdo_sqlsrv; \
+        docker-php-ext-enable pdo_sqlsrv; \
+        true; \
+    fi \
+\
 # Install psr
     && pecl install psr \
     && docker-php-ext-enable psr \
+    && true \
+\
+# Install redis
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && true \
+\
+# Install rdkafka
+    && pecl install rdkafka \
+    && docker-php-ext-enable rdkafka \
     && true \
 \
 # Install soap
