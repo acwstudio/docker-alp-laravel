@@ -1,17 +1,17 @@
-FROM php:8.1.13-fpm-alpine3.16
+FROM php:8.2.0-fpm-alpine3.16
 
 LABEL Maintainer="Jose Quintana <joseluisq.net>" \
-    Description="PHP-FPM v8.1 with essential extensions on top of Alpine Linux."
+    Description="PHP-FPM v8.2 with essential extensions on top of Alpine Linux."
 
 # Composer - https://getcomposer.org/download/
-ARG COMPOSER_VERSION="2.4.4"
-ARG COMPOSER_SUM="c252c2a2219956f88089ffc242b42c8cb9300a368fd3890d63940e4fc9652345"
+ARG COMPOSER_VERSION="2.5.1"
+ARG COMPOSER_SUM="f1b94fee11a5bd6a1aae5d77c8da269df27c705fcc806ebf4c8c2e6fa8645c20"
 
 # Swoole - https://github.com/swoole/swoole-src
 ARG SWOOLE_VERSION="4.8.12"
 
-# Phalcon - https://github.com/phalcon/cphalcon
-ARG PHALCON_VERSION="5.1.2"
+# # Phalcon - https://github.com/phalcon/cphalcon
+# ARG PHALCON_VERSION="5.1.2"
 
 # Install dependencies
 RUN set -eux \
@@ -161,12 +161,6 @@ RUN set -eux \
     && docker-php-ext-install -j$(nproc) intl \
     && true \
 \
-# # Install mcrypt
-# DEPRECATED: This dependency is dead so move to `libsodium` or `openssl`
-#     && pecl install mcrypt-1.0.4 \
-#     && docker-php-ext-enable mcrypt \
-#     && true \
-# \
 # Install memcache
     && pecl install memcache \
     && docker-php-ext-enable memcache \
@@ -203,6 +197,14 @@ RUN set -eux \
     && docker-php-ext-install -j$(nproc) pcntl \
     && true \
 \
+# NOT SUPPORTED YET
+# Install phalcon
+#     && git clone --depth=1 --branch=v${PHALCON_VERSION} https://github.com/phalcon/cphalcon.git \
+#     && cd cphalcon/build \
+#     && sh ./install \
+#     && docker-php-ext-enable phalcon \
+#     && true \
+# \
 # Install pdo_pgsql
     && docker-php-ext-install -j$(nproc) pdo_pgsql \
     && true \
@@ -211,15 +213,17 @@ RUN set -eux \
     && docker-php-ext-install -j$(nproc) pgsql \
     && true \
 \
-# Install sqlsrv
-    && pecl install sqlsrv \
-    && docker-php-ext-enable sqlsrv \
-    && true \
-\
-# Install pdo_sqlsrv
-    && pecl install pdo_sqlsrv \
-    && docker-php-ext-enable pdo_sqlsrv \
-    && true \
+# ONLY 64-bit targets
+    && if [ "$(uname -m)" = "x86_64" ] || [ "$(uname -m)" = "aarch64" ]; then \
+    # Install sqlsrv
+        pecl install sqlsrv; \
+        docker-php-ext-enable sqlsrv; \
+        true; \
+    # Install pdo_sqlsrv
+        pecl install pdo_sqlsrv; \
+        docker-php-ext-enable pdo_sqlsrv; \
+        true; \
+    fi \
 \
 # Install psr
     && pecl install psr \
@@ -338,7 +342,7 @@ RUN set -eux \
 # Perform PHP-FPM testing
     && echo "Performing PHP-FPM tests..." \
     && echo "date.timezone=UTC" > /usr/local/etc/php/php.ini \
-    && php -v | grep -oE 'PHP\s[.0-9]+' | grep -oE '[.0-9]+' | grep '^8.1' \
+    && php -v | grep -oE 'PHP\s[.0-9]+' | grep -oE '[.0-9]+' | grep '^8.2' \
     && /usr/local/sbin/php-fpm --test \
 \
     && PHP_ERROR="$( php -v 2>&1 1>/dev/null )" \
@@ -368,7 +372,7 @@ CMD ["php-fpm"]
 # Metadata
 LABEL org.opencontainers.image.vendor="Jose Quintana" \
     org.opencontainers.image.url="https://github.com/joseluisq/alpine-php-fpm" \
-    org.opencontainers.image.title="PHP-FPM v8.1 Alpine" \
-    org.opencontainers.image.description="PHP-FPM v8.1 with essential extensions on top of Alpine Linux." \
+    org.opencontainers.image.title="PHP-FPM v8.2 Alpine" \
+    org.opencontainers.image.description="PHP-FPM v8.2 with essential extensions on top of Alpine Linux." \
     org.opencontainers.image.version="$PHP_VERSION" \
     org.opencontainers.image.documentation="https://github.com/joseluisq/alpine-php-fpm"
