@@ -27,7 +27,7 @@ services:
     working_dir: ${WORKING_DIR}
     environment:
       - "ENV_SUBSTITUTION_ENABLE=true"
-      - "PHP_MEMORY_LIMIT=512M"
+      - "PHP_MEMORY_LIMIT=1024M"
       - "PHP_FPM_LISTEN=${PHP_FPM_LISTEN}"
       - "PHP_SESSION_GC_MAXLIFETIME=7200"
     expose:
@@ -38,6 +38,20 @@ services:
       - mysql8
       - web-network
       - psql
+
+  node:
+    build:
+      context: ./node
+#      dockerfile: ./node/Dockerfile
+    container_name: ${APP_NAME}-node
+    tty: true
+    ports:
+      - "5173:5173"
+    working_dir: ${WORKING_DIR}
+    volumes:
+      - ./laravel-app/project:/var/www/html
+    networks:
+      - web-network
 
 # Networks
 networks:
