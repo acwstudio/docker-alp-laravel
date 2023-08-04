@@ -1,17 +1,17 @@
-FROM php:8.2.0-fpm-alpine3.16
+FROM php:8.2.4-fpm-alpine3.16
 
 LABEL Maintainer="Jose Quintana <joseluisq.net>" \
     Description="PHP-FPM v8.2 with essential extensions on top of Alpine Linux."
 
 # Composer - https://getcomposer.org/download/
-ARG COMPOSER_VERSION="2.5.1"
-ARG COMPOSER_SUM="f1b94fee11a5bd6a1aae5d77c8da269df27c705fcc806ebf4c8c2e6fa8645c20"
+ARG COMPOSER_VERSION="2.5.5"
+ARG COMPOSER_SUM="566a6d1cf4be1cc3ac882d2a2a13817ffae54e60f5aa7c9137434810a5809ffc"
 
 # Swoole - https://github.com/swoole/swoole-src
-ARG SWOOLE_VERSION="4.8.12"
+ARG SWOOLE_VERSION="5.0.2"
 
-# # Phalcon - https://github.com/phalcon/cphalcon
-# ARG PHALCON_VERSION="5.1.2"
+# Phalcon - https://github.com/phalcon/cphalcon
+ARG PHALCON_VERSION="5.2.1"
 
 # Install dependencies
 RUN set -eux \
@@ -197,14 +197,13 @@ RUN set -eux \
     && docker-php-ext-install -j$(nproc) pcntl \
     && true \
 \
-# NOT SUPPORTED YET
 # Install phalcon
-#     && git clone --depth=1 --branch=v${PHALCON_VERSION} https://github.com/phalcon/cphalcon.git \
-#     && cd cphalcon/build \
-#     && sh ./install \
-#     && docker-php-ext-enable phalcon \
-#     && true \
-# \
+#    && git clone --depth=1 --branch=v${PHALCON_VERSION} https://github.com/phalcon/cphalcon.git \
+#    && cd cphalcon/build \
+#    && sh ./install \
+#    && docker-php-ext-enable phalcon \
+#    && true \
+#\
 # Install pdo_pgsql
     && docker-php-ext-install -j$(nproc) pdo_pgsql \
     && true \
@@ -226,9 +225,9 @@ RUN set -eux \
     fi \
 \
 # Install psr
-    && pecl install psr \
-    && docker-php-ext-enable psr \
-    && true \
+#    && pecl install psr \
+#    && docker-php-ext-enable psr \
+#    && true \
 \
 # Install redis
     && pecl install redis \
@@ -266,8 +265,6 @@ RUN set -eux \
             --enable-mysqlnd \
             --enable-sockets \
             --enable-openssl \
-            --enable-http2 \
-            --enable-swoole-json \
             --enable-swoole-curl \
     && docker-php-ext-install -j$(nproc) swoole \
     && rm -rf swoole.tar.gz $HOME/.composer/*-old.phar \
@@ -363,6 +360,9 @@ COPY entrypoint.sh /entrypoint.sh
 
 STOPSIGNAL SIGQUIT
 
+RUN ["chmod", "+x", "/envsubst.sh"]
+#RUN ["chmod", "+x", "/php_fpm_test.sh"]
+RUN ["chmod", "+x", "/entrypoint.sh"]
 ENTRYPOINT ["/entrypoint.sh"]
 
 EXPOSE 9000
