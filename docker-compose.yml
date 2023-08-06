@@ -50,8 +50,8 @@ services:
     working_dir: ${WORKING_DIR}
     volumes:
       - ./laravel-app/project:/var/www/html
-    networks:
-      - web-network
+#    networks:
+#      - web-network
 
 # Networks
 networks:
