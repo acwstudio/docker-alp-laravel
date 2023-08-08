@@ -38,6 +38,7 @@ services:
       - mysql8
       - web-network
       - psql
+      - mailpit
 
   node:
     build:
@@ -61,3 +62,5 @@ networks:
     name: mysql8
   psql:
     name: psql
+  mailpit:
+    name: mailpit
