@@ -38,12 +38,14 @@ services:
       - mysql8
       - web-network
       - psql
+      - mailpit
 
   node:
     build:
       context: ./node
 #      dockerfile: ./node/Dockerfile
     container_name: ${APP_NAME}-node
+    restart: unless-stopped
     tty: true
     ports:
       - "5173:5173"
@@ -61,3 +63,5 @@ networks:
     name: mysql8
   psql:
     name: psql
+  mailpit:
+    name: mailpit
